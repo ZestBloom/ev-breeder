@@ -3,8 +3,8 @@
 // -----------------------------------------------
 // Name: Utilities
 // Author: Nicholas Shellabarger
-// Version: 0.0.5 - returns p v a array
-// Requires Reach v0.1.8
+// Version: 0.0.6 - c3 addrs
+// Requires Reach v0.1.9
 // -----------------------------------------------
 export const max = (a, b) => (a > b ? a : b);
 export const min = (a, b) => (a < b ? a : b);
@@ -231,6 +231,7 @@ export const depositTok = (A) => {
   commit();
   return { amount, tokens: [tok0] };
 };
+
 export const requireTok7 = (A) => {
   A.only(() => {
     const {
@@ -333,6 +334,7 @@ export const requireTok2 = (A) => {
   commit();
   return { tokens: [tok0, tok1] };
 };
+
 export const requireTok = (A) => {
   A.only(() => {
     const {
@@ -342,4 +344,62 @@ export const requireTok = (A) => {
   A.publish(tok0);
   commit();
   return { tokens: [tok0] };
+};
+
+export const requireTokDistinct2 = (A, tok0, tok1) => {
+  A.only(() => {
+    const {
+      tokens: [tok2],
+    } = declassify(interact.getParams());
+    assume(distinct(tok0, tok1, tok2));
+  });
+  A.publish(tok2);
+  require(distinct(tok0, tok1, tok2));
+  commit();
+  return { tokens: [tok2] };
+};
+
+export const requireTok2AmountWithView = (A, B, v) => {
+  A.only(() => {
+    const {
+      tokens: [tok0, tok1],
+      amount,
+    } = declassify(interact.getParams());
+    assume(tok0 != tok1);
+    assume(amount > 0);
+  });
+  A.publish(tok0, tok1, amount).pay(amount);
+  require(tok0 != tok1);
+  require(amount > 0);
+  B.set(A);
+  v.tok0.set(tok0);
+  v.tok1.set(tok1);
+  v.amount.set(amount);
+  commit();
+  return { tokens: [tok0, tok1] };
+};
+
+export const depositTokDistinct2 = (A, B, tok0, tok1) => {
+  A.only(() => {
+    const {
+      tokens: [tok2],
+    } = declassify(interact.getParams());
+    assume(distinct(tok0, tok1, tok2));
+  });
+  A.publish(tok2).timeout(relativeTime(100), () => {
+    Anybody.publish();
+    transfer(balance()).to(B);
+    commit();
+    exit();
+  });
+  require(distinct(tok0, tok1, tok2));
+  commit();
+  A.pay([0, [1, tok2]]).timeout(relativeTime(100), () => {
+    Anybody.publish();
+    transfer(balance()).to(B);
+    commit();
+    exit();
+  });
+  commit();
+  return { tokens: [tok2] };
 };

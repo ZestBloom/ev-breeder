@@ -68,6 +68,11 @@ devnet() {
         local -x REACH_CONNECTOR_MODE=ALGO-devnet
         ./reach devnet
 }
+debug() {
+        local -x REACH_CONNECTOR_MODE=ALGO-devnet
+	local -x REACH_DEBUG=Y
+        node index.mjs index
+}
 run() {
         local -x REACH_CONNECTOR_MODE=ALGO-devnet
         node index.mjs index
