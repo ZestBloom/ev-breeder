@@ -371,6 +371,7 @@ export const requireTok2AmountWithView = (A, B, v) => {
   A.publish(tok0, tok1, amount).pay(amount);
   require(tok0 != tok1);
   require(amount > 0);
+  A.interact.signal();
   B.set(A);
   v.tok0.set(tok0);
   v.tok1.set(tok1);
@@ -379,7 +380,7 @@ export const requireTok2AmountWithView = (A, B, v) => {
   return { tokens: [tok0, tok1] };
 };
 
-export const depositTokDistinct2 = (A, B, tok0, tok1) => {
+export const depositTokDistinct2 = (A, B, tok0, tok1, v) => {
   A.only(() => {
     const {
       tokens: [tok2],
@@ -400,6 +401,7 @@ export const depositTokDistinct2 = (A, B, tok0, tok1) => {
     commit();
     exit();
   });
+  v.ready.set(true);
   commit();
   return { tokens: [tok2] };
 };

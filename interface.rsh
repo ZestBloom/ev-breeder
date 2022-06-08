@@ -26,6 +26,7 @@ export const Participants = () => [
         amount: UInt
       })
     ),
+    signal: Fun([], Null)
   }),
   Participant("Claimer", {
     claim: Fun([], Bool)
@@ -37,17 +38,19 @@ export const Views = () => [
     tok0: Token, // ex goETH
     tok1: Token, // ex goETH
     amount: UInt, // ex goETH
+    ready: Bool,
+    claimed: Bool
   }),
 ];
 export const Api = () => [];
 export const App = (map) => {
-  const [[Manager, Breeder, Claimer, Relay], [v], _] = map;
+  const [_, [Manager, Breeder, Claimer, Relay], [v], _] = map;
   const {
     tokens: [tok0, tok1],
   } = requireTok2AmountWithView(Breeder, Claimer, v);
   const {
     tokens: [tok2],
-  } = depositTokDistinct2(Manager, Breeder, tok0, tok1);
+  } = depositTokDistinct2(Manager, Breeder, tok0, tok1, v);
   Claimer.only(() => {
     const doClaim = declassify(interact.claim());
     assume(doClaim == true);
@@ -62,6 +65,7 @@ export const App = (map) => {
   require(doClaim == true);
   transfer(balance(tok2), tok2).to(Breeder);
   transfer(balance()).to(Manager);
+  v.claimed.set(true);
   commit();
   Relay.publish();
   commit();
