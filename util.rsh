@@ -380,28 +380,54 @@ export const requireTok2AmountWithView = (A, B, v) => {
   return { tokens: [tok0, tok1] };
 };
 
-export const depositTokDistinct2 = (A, B, tok0, tok1, v) => {
+export const requireTok5AmountWithView = (A, B, v) => {
   A.only(() => {
     const {
-      tokens: [tok2],
+      tokens: [tok0, tok1, tok2, tok3, tok4 ],
+      amount,
     } = declassify(interact.getParams());
-    assume(distinct(tok0, tok1, tok2));
+    assume(distinct(tok0,tok1,tok2,tok3,tok4));
+    assume(amount > 0);
   });
-  A.publish(tok2).timeout(relativeTime(100), () => {
-    Anybody.publish();
-    transfer(balance()).to(B);
-    commit();
-    exit();
-  });
-  require(distinct(tok0, tok1, tok2));
+  A.publish(tok0, tok1, tok2, tok3, tok4, amount).pay(amount);
+  require(distinct(tok0,tok1,tok2,tok3,tok4));
+  require(amount > 0);
+  A.interact.signal();
+  B.set(A);
+  v.tok0.set(tok0);
+  v.tok1.set(tok1);
+  v.tok2.set(tok2);
+  v.tok3.set(tok3);
+  v.tok4.set(tok4);
+  v.amount.set(amount);
   commit();
-  A.pay([0, [1, tok2]]).timeout(relativeTime(100), () => {
+  return { tokens: [tok0, tok1, tok2, tok3, tok4] };
+};
+
+
+export const depositTokDistinct5 = (A, B, tok0, tok1, tok2, tok3, tok4, v) => {
+  A.only(() => {
+    const {
+      tokens: [tok5],
+    } = declassify(interact.getParams());
+    assume(distinct(tok0, tok1, tok2, tok3, tok4, tok5));
+  });
+  A.publish(tok5).timeout(relativeTime(100), () => {
     Anybody.publish();
     transfer(balance()).to(B);
     commit();
     exit();
   });
+  require(distinct(tok0, tok1, tok2, tok3, tok4, tok5));
+  commit();
+  A.pay([0, [1, tok5]]).timeout(relativeTime(100), () => {
+    Anybody.publish();
+    transfer(balance()).to(B);
+    commit();
+    exit();
+  });
+  v.tok5.set(tok5);
   v.ready.set(true);
   commit();
-  return { tokens: [tok2] };
+  return { tokens: [tok5] };
 };
