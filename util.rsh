@@ -359,28 +359,31 @@ export const requireTokDistinct2 = (A, tok0, tok1) => {
   return { tokens: [tok2] };
 };
 
-export const requireTok2AmountWithView = (A, B, v) => {
+export const requireAmountWithView = (A, B, C, v, addr, amt, ttl, tok0, tok1) => {
   A.only(() => {
     const {
-      tokens: [tok0, tok1],
       amount,
     } = declassify(interact.getParams());
-    assume(tok0 != tok1);
     assume(amount > 0);
   });
-  A.publish(tok0, tok1, amount).pay(amount);
-  require(tok0 != tok1);
+  A.publish(amount)
+    .pay(amount+amt)
+    .timeout(relativeTime(ttl), () => {
+      C.publish()
+      commit();
+      exit();
+    })
   require(amount > 0);
+  transfer(amt).to(addr);
   A.interact.signal();
   B.set(A);
   v.tok0.set(tok0);
   v.tok1.set(tok1);
   v.amount.set(amount);
   commit();
-  return { tokens: [tok0, tok1] };
 };
 
-export const depositTokDistinct2 = (A, B, tok0, tok1, v) => {
+export const depositTokDistinct2 = (A, B, C, tok0, tok1, v) => {
   A.only(() => {
     const {
       tokens: [tok2],
@@ -388,7 +391,7 @@ export const depositTokDistinct2 = (A, B, tok0, tok1, v) => {
     assume(distinct(tok0, tok1, tok2));
   });
   A.publish(tok2).timeout(relativeTime(100), () => {
-    Anybody.publish();
+    C.publish();
     transfer(balance()).to(B);
     commit();
     exit();
@@ -396,7 +399,7 @@ export const depositTokDistinct2 = (A, B, tok0, tok1, v) => {
   require(distinct(tok0, tok1, tok2));
   commit();
   A.pay([0, [1, tok2]]).timeout(relativeTime(100), () => {
-    Anybody.publish();
+    C.publish();
     transfer(balance()).to(B);
     commit();
     exit();

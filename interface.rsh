@@ -1,7 +1,7 @@
 "reach 0.1";
 "use strict";
 
-import { requireTok2AmountWithView, depositTokDistinct2 } from "./util.rsh";
+import { requireAmountWithView, depositTokDistinct2 } from "./util.rsh";
 // -----------------------------------------------
 // Name: Interface Template
 // Description: NP Rapp simple
@@ -9,6 +9,7 @@ import { requireTok2AmountWithView, depositTokDistinct2 } from "./util.rsh";
 // Version: 0.0.2 - initial
 // Requires Reach v0.1.7 (stable)
 // ----------------------------------------------
+export const Event = () => [];
 export const Participants = () => [
   Participant("Manager", {
     getParams: Fun(
@@ -22,7 +23,6 @@ export const Participants = () => [
     getParams: Fun(
       [],
       Object({
-        tokens: Array(Token, 2),
         amount: UInt
       })
     ),
@@ -31,7 +31,7 @@ export const Participants = () => [
   Participant("Claimer", {
     claim: Fun([], Bool)
   }),
-  Participant("Relay", {})
+  ParticipantClass("Relay", {})
 ];
 export const Views = () => [
   View({
@@ -44,13 +44,11 @@ export const Views = () => [
 ];
 export const Api = () => [];
 export const App = (map) => {
-  const [_, [Manager, Breeder, Claimer, Relay], [v], _] = map;
-  const {
-    tokens: [tok0, tok1],
-  } = requireTok2AmountWithView(Breeder, Claimer, v);
+  const [{ amt, ttl, tok0, tok1 }, [addr, _], [Manager, Breeder, Claimer, Relay], [v], _, _] = map;
+  requireAmountWithView(Breeder, Claimer, Relay, v, addr, amt, ttl, tok0, tok1);
   const {
     tokens: [tok2],
-  } = depositTokDistinct2(Manager, Breeder, tok0, tok1, v);
+  } = depositTokDistinct2(Manager, Breeder, Relay, tok0, tok1, v);
   Claimer.only(() => {
     const doClaim = declassify(interact.claim());
     assume(doClaim == true);
